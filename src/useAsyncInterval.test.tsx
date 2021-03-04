@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------------------
-* Copyright (c) Bentley Systems, Incorporated. All rights reserved.
-* See LICENSE.md in the project root for license terms and full copyright notice.
-*--------------------------------------------------------------------------------------------*/
+ * Copyright (c) Bentley Systems, Incorporated. All rights reserved.
+ * See LICENSE.md in the project root for license terms and full copyright notice.
+ *--------------------------------------------------------------------------------------------*/
 
 import React from "react";
 import { render } from "@testing-library/react";
@@ -47,8 +47,8 @@ describe("useAsyncInterval()", () => {
       expect(effect).toBeCalledTimes(1);
     });
     function TestComp() {
-      void useAsyncInterval(async ({ setCancel }) => {
-        setCancel(cancel);
+      void useAsyncInterval(async ({ setCanceller }) => {
+        setCanceller(cancel);
         await effect();
       }, TINY_INTERVAL);
       return null;

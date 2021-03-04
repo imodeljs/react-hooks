@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------------------
-* Copyright (c) Bentley Systems, Incorporated. All rights reserved.
-* See LICENSE.md in the project root for license terms and full copyright notice.
-*--------------------------------------------------------------------------------------------*/
+ * Copyright (c) Bentley Systems, Incorporated. All rights reserved.
+ * See LICENSE.md in the project root for license terms and full copyright notice.
+ *--------------------------------------------------------------------------------------------*/
 
 import React, { useEffect } from "react";
 
@@ -9,8 +9,9 @@ type CancellationFunc = () => void;
 
 /** a wrapper over React's useEffect that facilitates good practice for async effects,
  * you can inline the async code, check if the effect is stale, and set a custom
- * cancellation function to be invoked on cleanup, which is useful for cancelling e.g. axios
- * requests.
+ * cancellation function to be invoked on cleanup, which is useful for cancelling
+ * actions such as fetch requests with AbortController, or axios requests with CancelToken
+ *
  * The cancel function is assumed to be the cleanup action so if you need more advanced
  * cleanup or your dependencies include things upon which you shouldn't cancel, use a raw effect
  *
@@ -23,9 +24,9 @@ type CancellationFunc = () => void;
  * ).catch((boom) => {})
  *
  * @example
- * useAsyncEffect(async ({setCancel}) => {
+ * useAsyncEffect(async ({setCanceller}) => {
  *   const req = axios.get<Resp>(url, {
- *     cancelToken: new axios.CancelToken(setCancel) // works well with axios
+ *     cancelToken: new axios.CancelToken(setCanceller) // works well with axios
  *   });
  *   await req;
  * }, [url]);
@@ -43,7 +44,9 @@ type CancellationFunc = () => void;
 export function useAsyncEffect<T extends Promise<void> | void>(
   effect: (util: {
     isStale: () => boolean;
+    /** @deprecated perfer setCanceller, the name is more intuitive */
     setCancel: (cancel: CancellationFunc) => void;
+    setCanceller: (cancel: CancellationFunc) => void;
   }) => T,
   deps?: React.DependencyList
 ): T extends Promise<void> ? Promise<void> : void {
@@ -56,10 +59,13 @@ export function useAsyncEffect<T extends Promise<void> | void>(
     useEffect(() => {
       let isStale = false;
       let onCancel: CancellationFunc | undefined;
+      const setCanceller = (inCancelFunc: CancellationFunc) => {
+        onCancel = inCancelFunc;
+      };
       const result = effect({
         isStale: () => isStale,
-        setCancel: (inCancelFunc: CancellationFunc) =>
-          void (onCancel = inCancelFunc),
+        setCanceller,
+        setCancel: setCanceller,
       });
       const isPromise = (a: any): a is Promise<void> => a !== undefined;
       if (isPromise(result)) {
